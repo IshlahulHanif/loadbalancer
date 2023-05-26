@@ -1,0 +1,39 @@
+version: '3.8'
+services:
+  backendapp1:
+    build:
+      context: ./app/inventory
+      dockerfile: Dockerfile
+    ports:
+      - 8081:8080
+    networks:
+      mynetwork:
+        ipv4_address: 192.168.0.11
+
+  backendapp2:
+    build:
+      context: ./app/inventory
+      dockerfile: Dockerfile
+    ports:
+      - 8082:8080
+    networks:
+      mynetwork:
+        ipv4_address: 192.168.0.12
+
+  backendapp3:
+    build:
+      context: ./app/inventory
+      dockerfile: Dockerfile
+    ports:
+      - 8083:8080
+    networks:
+      mynetwork:
+        ipv4_address: 192.168.0.13
+
+networks:
+  mynetwork:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.0.0/24
