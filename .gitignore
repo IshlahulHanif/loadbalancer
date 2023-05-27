@@ -21,4 +21,11 @@
 go.work
 
 # goland
-*.idea
+vendor/
+.vscode/
+
+# Compiled source #
+###################
+*.pyc
+*.idea/
+*.DS_Store
