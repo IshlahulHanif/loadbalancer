@@ -65,3 +65,12 @@ func (u Usecase) RemoveHost(ctx context.Context, host string) (err error) {
 
 	return nil
 }
+
+func (u Usecase) GetHostListFromPool(ctx context.Context) (res []string, err error) {
+	res, err = u.repo.hostpool.GetHostListFromPool(ctx)
+	if err != nil {
+		return []string{}, poneglyph.Trace(err)
+	}
+
+	return res, err
+}

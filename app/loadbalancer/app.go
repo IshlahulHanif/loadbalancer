@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"github.com/IshlahulHanif/poneglyph"
 	"github.com/loadbalancer/api/httpapi"
+	cronjob "github.com/loadbalancer/job/cron"
 	"github.com/loadbalancer/pkg/config"
 	"net/http"
+	"time"
 )
 
 func main() {
@@ -26,6 +28,10 @@ func main() {
 			"http://127.0.0.1:8082",
 			"http://127.0.0.1:8083",
 		},
+		PingTimeout: 5 * time.Second,
+		CronConfig: config.CronConfig{
+			HealthCheckAll: "@every 10s",
+		},
 	}
 
 	// init poneglyph settings
@@ -35,8 +41,17 @@ func main() {
 	poneglyph.SetIsPrintNewline(true)
 	poneglyph.SetIsUseTabSeparator(false)
 
+	// TODO: tidy up
+
 	// init http api
 	httpApi, err := httpapi.GetInstance(conf)
+	if err != nil {
+		err = poneglyph.Trace(err)
+		return
+	}
+
+	// init cron job scheduler
+	cronJob, err := cronjob.GetInstance(conf)
 	if err != nil {
 		err = poneglyph.Trace(err)
 		return
@@ -51,7 +66,7 @@ func main() {
 	requestRouter.HandleFunc("/", httpApi.HandlerForwardRequest)
 
 	// register handlers for host management
-	hostManagementRouter.HandleFunc("/host/manage", httpApi.HandlerManageHost)
+	hostManagementRouter.HandleFunc("/host/manage", httpApi.HandlerManageHostRequest)
 
 	var errChan = make(chan error)
 
@@ -70,6 +85,13 @@ func main() {
 			errChan <- poneglyph.Trace(errServer)
 		}
 	}()
+
+	// Start cron scheduler
+	err = cronJob.StartAllCronJobScheduler()
+	if err != nil {
+		err = poneglyph.Trace(err)
+		return
+	}
 
 	err = <-errChan
 	if err != nil {
