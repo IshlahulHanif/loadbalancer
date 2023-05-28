@@ -1,14 +1,15 @@
 package hostpool
 
 import (
+	"github.com/IshlahulHanif/poneglyph"
 	"github.com/loadbalancer/pkg/config"
+	"github.com/loadbalancer/repository/hostpool"
 	"sync"
 )
 
 var (
 	m    Usecase
 	once sync.Once
-	lock sync.Mutex
 )
 
 func GetInstance(c config.Config) (Usecase, error) {
@@ -17,19 +18,16 @@ func GetInstance(c config.Config) (Usecase, error) {
 	)
 
 	once.Do(func() {
-		// append all host from config
-		var hostList = make([]string, 0)
-		for _, host := range c.HostList {
-			hostList = append(hostList, host)
-		}
-
-		queue := RoundRobinQueue{
-			queue: hostList,
-			index: 0,
+		hostpoolRepo, err := hostpool.GetInstance(c)
+		if err != nil {
+			errFinal = poneglyph.Trace(err)
+			return
 		}
 
 		m = Usecase{
-			roundRobinQueue: queue, //TODO: move the sync lock to outside
+			repo: repository{
+				hostpool: hostpoolRepo,
+			},
 		}
 	})
 

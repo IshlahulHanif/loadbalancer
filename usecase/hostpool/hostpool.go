@@ -6,49 +6,61 @@ import (
 	"github.com/IshlahulHanif/poneglyph"
 )
 
-func (u *Usecase) GetHost(ctx context.Context) (res string, err error) {
-	lock.Lock()
-	defer lock.Unlock()
+func (u Usecase) GetHost(ctx context.Context) (res string, err error) {
+	pool, err := u.repo.hostpool.GetHostListFromPool(ctx)
+	if err != nil {
+		return "", poneglyph.Trace(err)
+	}
 
-	// get current host in queue
-	length := len(u.roundRobinQueue.queue)
+	length := len(pool)
 	if length == 0 {
 		// something wrong
 		return "", poneglyph.Trace(errors.New("hostpool empty"))
 	}
 
-	if length-1 < u.roundRobinQueue.index {
-		// index overload
-		u.roundRobinQueue.index = 0
-		// TODO: move host around to avoid overload on first host
+	currentIdx, err := u.repo.hostpool.GetCurrentIndex(ctx)
+	if err != nil {
+		return "", poneglyph.Trace(err)
 	}
 
-	res = u.roundRobinQueue.queue[u.roundRobinQueue.index]
-	u.roundRobinQueue.index = (u.roundRobinQueue.index + 1) % length
+	if length-1 < currentIdx {
+		// index overload, restart to 0
+		currentIdx, err = u.repo.hostpool.SetIndex(ctx, 0)
+		if err != nil {
+			return "", poneglyph.Trace(err)
+		}
+
+		// re-arrange host list to avoid overwork on first host
+		err = u.repo.hostpool.RequeueFirstHostToLast(ctx)
+		if err != nil {
+			return "", poneglyph.Trace(err)
+		}
+
+		return "", poneglyph.Trace(err)
+	}
+
+	res = pool[currentIdx]
+	currentIdx, err = u.repo.hostpool.IncrementIndex(ctx, 1)
+	if err != nil {
+		return "", poneglyph.Trace(err)
+	}
 
 	return res, nil
 }
 
-func (u *Usecase) AddHost(ctx context.Context, host string) (err error) {
-	lock.Lock()
-	defer lock.Unlock()
-
-	u.roundRobinQueue.queue = append(u.roundRobinQueue.queue, host)
+func (u Usecase) AddHost(ctx context.Context, host string) (err error) {
+	err = u.repo.hostpool.AppendHost(ctx, host)
+	if err != nil {
+		return poneglyph.Trace(err)
+	}
 
 	return nil
 }
 
-func (u *Usecase) RemoveHost(ctx context.Context, host string) (err error) {
-	lock.Lock()
-	defer lock.Unlock()
-
-	for i, value := range u.roundRobinQueue.queue { //TODO: can optimize? but you dont usually have a large set of host so...
-		if value == host {
-			// Remove the element from the roundRobinQueue
-			u.roundRobinQueue.queue = append(u.roundRobinQueue.queue[:i], u.roundRobinQueue.queue[i+1:]...)
-			u.roundRobinQueue.index = u.roundRobinQueue.index % len(u.roundRobinQueue.queue)
-			break
-		}
+func (u Usecase) RemoveHost(ctx context.Context, host string) (err error) {
+	err = u.repo.hostpool.RemoveHostByHostAddress(ctx, host)
+	if err != nil {
+		return poneglyph.Trace(err)
 	}
 
 	return nil

@@ -1,6 +1,6 @@
 package hostpool
 
 type (
-	Memcache interface {
-	}
+// Memcache interface {
+// }
 )

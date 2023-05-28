@@ -1,10 +1,9 @@
 package hostpool
 
 type Usecase struct {
-	roundRobinQueue RoundRobinQueue
+	repo repository
 }
 
-type RoundRobinQueue struct {
-	queue []string
-	index int
+type repository struct {
+	hostpool RepoHostpool
 }

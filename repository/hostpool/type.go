@@ -1,7 +1,7 @@
 package hostpool
 
-type Resource struct {
+type Repository struct {
 	//db database.Database
 	//redis redis
-	memcache Memcache
+	//memcache Memcache
 }
