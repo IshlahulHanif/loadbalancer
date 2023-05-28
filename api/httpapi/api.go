@@ -12,27 +12,27 @@ import (
 
 func (m Module) HandlerForwardRequest(w http.ResponseWriter, r *http.Request) {
 	var (
-		ctx = context.Background()
-		err error
+		ctx        = context.Background()
+		err        error
+		statusCode int
 	)
 
+	defer func() {
+		if err != nil {
+			HttpError(w, statusCode, err)
+		}
+	}()
+
 	if r.Method != http.MethodPost {
-		// TODO: these error handling can be extracted as a function
 		err = poneglyph.Trace(errors.New("unsupported HTTP method"))
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("X-Content-Type-Options", "nosniff")
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		fmt.Println(poneglyph.GetErrorLogMessage(err))
+		statusCode = http.StatusMethodNotAllowed
 		return
 	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		err = poneglyph.Trace(err, "Error reading request body")
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("X-Content-Type-Options", "nosniff")
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Println(poneglyph.GetErrorLogMessage(err))
+		statusCode = http.StatusBadRequest
 		return
 	}
 	defer r.Body.Close()
@@ -45,15 +45,10 @@ func (m Module) HandlerForwardRequest(w http.ResponseWriter, r *http.Request) {
 		Method:      r.Method,
 	}
 
-	r.URL.String()
-
 	resp, err := m.service.forwarder.ForwardRequest(ctx, req)
 	if err != nil {
 		err = poneglyph.Trace(err)
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("X-Content-Type-Options", "nosniff")
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Println(poneglyph.GetErrorLogMessage(err))
+		statusCode = http.StatusInternalServerError
 		return
 	}
 
@@ -65,14 +60,15 @@ func (m Module) HandlerForwardRequest(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	//err = json.NewEncoder(w).Encode(resp.Body) // TODO: should we use json encoder instead?
+	// We use raw encoder because this api purpose is to forward anything
 	_, err = fmt.Fprint(w, string(resp.Body))
 	if err != nil {
 		err = poneglyph.Trace(err)
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("X-Content-Type-Options", "nosniff")
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Println(poneglyph.GetErrorLogMessage(err))
+		statusCode = http.StatusInternalServerError
 		return
 	}
+}
+
+func (m Module) HandlerAddHost(w http.ResponseWriter, r *http.Request) {
+
 }
