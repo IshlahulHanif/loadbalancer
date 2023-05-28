@@ -29,11 +29,11 @@ func (m Module) handlerHealthCheckJob() {
 	fmt.Println("Health Check Result:")
 	fmt.Println("Healthy Hosts:")
 	for _, host := range res.HealthyHosts {
-		fmt.Printf("\t-%s\n", host)
+		fmt.Printf("\t- %s\n", host)
 	}
 
 	fmt.Println("Down Hosts:")
 	for _, host := range res.DownHosts {
-		fmt.Printf("\t-%s\n", host)
+		fmt.Printf("\t- %s\n", host)
 	}
 }
