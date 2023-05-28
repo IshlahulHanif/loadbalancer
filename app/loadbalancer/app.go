@@ -2,19 +2,18 @@ package main
 
 import (
 	"github.com/IshlahulHanif/poneglyph"
-	api "github.com/loadbalancer/httpapi"
+	"github.com/loadbalancer/api/httpapi"
+	"github.com/loadbalancer/pkg/config"
 	"net/http"
 )
 
 func main() {
 	// init config
-	conf := utils.Config{
-		DatabaseConfig: database.ConfigDatabase{
-			Host:     "127.0.0.1",
-			Port:     "5432",
-			User:     "postgres",
-			Password: "password",
-			Dbname:   "wallet_db",
+	conf := config.Config{
+		HostList: []string{ //TODO: read from config file
+			"http://127.0.0.1:8081",
+			"http://127.0.0.1:8082",
+			"http://127.0.0.1:8083",
 		},
 	}
 
@@ -26,19 +25,15 @@ func main() {
 	poneglyph.SetIsUseTabSeparator(false)
 
 	// init http api
-	httpApi, err := api.GetInstance(conf)
+	httpApi, err := httpapi.GetInstance(conf)
 	if err != nil {
 		return
 	}
 
 	// register handlers
-	http.HandleFunc("/api/v1/init", httpApi.HandlerInitAccountWallet)
-	http.HandleFunc("/api/v1/wallet", httpApi.HandlerWallet)
-	http.HandleFunc("/api/v1/wallet/transactions", httpApi.HandlerCheckWalletTransactions)
-	http.HandleFunc("/api/v1/wallet/deposits", httpApi.HandlerDeposit)
-	http.HandleFunc("/api/v1/wallet/withdrawals", httpApi.HandlerWithdraw)
+	http.HandleFunc("/", httpApi.HandlerForwardRequest)
 
-	err = http.ListenAndServe("", nil)
+	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
 		poneglyph.Trace(err)
 		return

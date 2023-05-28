@@ -2,7 +2,7 @@ package httpapi
 
 import (
 	"github.com/loadbalancer/pkg/config"
-	"github.com/loadbalancer/usecase/loadbalancer"
+	"github.com/loadbalancer/service/forwarder"
 	"sync"
 )
 
@@ -17,15 +17,15 @@ func GetInstance(c config.Config) (Module, error) {
 	)
 
 	once.Do(func() {
-		loadbalancerUsecase, err := loadbalancer.GetInstance(c)
+		forwarderService, err := forwarder.GetInstance(c)
 		if err != nil {
 			errFinal = err
 			return
 		}
 
 		m = Module{
-			usecase: usecase{
-				loadbalancer: loadbalancerUsecase,
+			service: service{
+				forwarder: forwarderService,
 			},
 		}
 	})
