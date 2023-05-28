@@ -6,7 +6,7 @@ type (
 	RepoHostpool interface {
 		GetHostListFromPool(ctx context.Context) (res []string, err error)
 		GetCurrentIndex(ctx context.Context) (index int, err error)
-		GetHostListLen(ctx context.Context) (res int, err error)
+		GetHostListLength(ctx context.Context) (res int, err error)
 		AppendHost(ctx context.Context, host string) (err error)
 		RequeueFirstHostToLast(ctx context.Context) (err error)
 		RemoveHostByHostAddress(ctx context.Context, host string) (err error)

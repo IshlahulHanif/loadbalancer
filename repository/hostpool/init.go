@@ -9,7 +9,7 @@ var (
 	m    Repository
 	once sync.Once
 
-	// host pool data related
+	// hostpool pool data related
 	lock  sync.RWMutex
 	pool  []string
 	index int
@@ -21,7 +21,7 @@ func GetInstance(c config.Config) (Repository, error) {
 	)
 
 	once.Do(func() {
-		// append all host from config
+		// append all hostpool from config
 		for _, host := range c.HostList {
 			pool = append(pool, host)
 		}

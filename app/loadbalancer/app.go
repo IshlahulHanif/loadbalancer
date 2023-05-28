@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/IshlahulHanif/poneglyph"
 	"github.com/loadbalancer/api/httpapi"
 	"github.com/loadbalancer/pkg/config"
@@ -8,6 +9,16 @@ import (
 )
 
 func main() {
+	var (
+		err error
+	)
+
+	defer func() {
+		if err != nil {
+			fmt.Println(poneglyph.GetErrorLogMessage(err))
+		}
+	}()
+
 	// init config
 	conf := config.Config{
 		HostList: []string{ //TODO: read from config file
@@ -27,15 +38,44 @@ func main() {
 	// init http api
 	httpApi, err := httpapi.GetInstance(conf)
 	if err != nil {
+		err = poneglyph.Trace(err)
 		return
 	}
 
-	// register handlers
-	http.HandleFunc("/", httpApi.HandlerForwardRequest)
+	// Create two routers for different ports
+	requestRouter := http.NewServeMux()
 
-	err = http.ListenAndServe(":8080", nil)
+	hostManagementRouter := http.NewServeMux()
+
+	// register handlers for request forwarder
+	requestRouter.HandleFunc("/", httpApi.HandlerForwardRequest)
+
+	// register handlers for host management
+	hostManagementRouter.HandleFunc("/host/manage", httpApi.HandlerManageHost)
+
+	var errChan = make(chan error)
+
+	// Start the requestRouter server on port 8080
+	go func() {
+		errServer := http.ListenAndServe(":8080", requestRouter)
+		if errServer != nil {
+			errChan <- poneglyph.Trace(errServer)
+		}
+	}()
+
+	// Start the hostManagementRouter server on port 9090
+	go func() {
+		errServer := http.ListenAndServe(":9090", hostManagementRouter)
+		if errServer != nil {
+			errChan <- poneglyph.Trace(errServer)
+		}
+	}()
+
+	err = <-errChan
 	if err != nil {
-		poneglyph.Trace(err)
-		return
+		err = poneglyph.Trace(err)
+		// TODO: consume all errChan to avoid memory leak
 	}
+
+	// TODO: make sure to Shutdown the servers gracefully
 }

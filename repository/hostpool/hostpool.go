@@ -18,7 +18,7 @@ func (r Repository) GetCurrentIndex(ctx context.Context) (res int, err error) {
 	return index, nil
 }
 
-func (r Repository) GetHostListLen(ctx context.Context) (res int, err error) {
+func (r Repository) GetHostListLength(ctx context.Context) (res int, err error) {
 	lock.RLock()
 	defer lock.RUnlock()
 
@@ -29,6 +29,7 @@ func (r Repository) AppendHost(ctx context.Context, host string) (err error) {
 	lock.Lock()
 	defer lock.Unlock()
 
+	// TODO: make sure hosts are unique before append
 	pool = append(pool, host)
 
 	return nil
@@ -49,7 +50,7 @@ func (r Repository) RemoveHostByHostAddress(ctx context.Context, host string) (e
 	lock.Lock()
 	defer lock.Unlock()
 
-	for i, value := range pool { //TODO: can optimize? but you dont usually have a large set of host so...
+	for i, value := range pool { //TODO: can optimize? but you dont usually have a large set of hostpool so...
 		if value == host {
 			// Remove the element from the roundRobinQueue
 			pool = append(pool[:i], pool[i+1:]...)

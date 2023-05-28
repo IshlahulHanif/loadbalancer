@@ -3,6 +3,7 @@ package httpapi
 import (
 	"github.com/loadbalancer/pkg/config"
 	"github.com/loadbalancer/service/forwarder"
+	"github.com/loadbalancer/service/hostpool"
 	"sync"
 )
 
@@ -23,9 +24,16 @@ func GetInstance(c config.Config) (Module, error) {
 			return
 		}
 
+		hostpoolService, err := hostpool.GetInstance(c)
+		if err != nil {
+			errFinal = err
+			return
+		}
+
 		m = Module{
 			service: service{
 				forwarder: forwarderService,
+				hostpool:  hostpoolService,
 			},
 		}
 	})

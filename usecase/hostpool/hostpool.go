@@ -30,7 +30,7 @@ func (u Usecase) GetHost(ctx context.Context) (res string, err error) {
 			return "", poneglyph.Trace(err)
 		}
 
-		// re-arrange host list to avoid overwork on first host
+		// re-arrange hostpool list to avoid overwork on first hostpool
 		err = u.repo.hostpool.RequeueFirstHostToLast(ctx)
 		if err != nil {
 			return "", poneglyph.Trace(err)

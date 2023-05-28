@@ -12,14 +12,14 @@ import (
 func (s Service) ForwardRequest(ctx context.Context, req forwarder.ForwardRequestReq) (resp forwarder.ForwardRequestResp, err error) {
 	resp.Header = map[string][]string{}
 
-	// get host
+	// get hostpool
 	host, err := s.usecase.hostpool.GetHost(ctx)
 	if err != nil {
 		return resp, poneglyph.Trace(err)
 	}
 
-	// TODO: regulate http client request in a pkg, this function should only be getting the host and forwarding the req, not building the resp etc
-	// forward request by hitting the IP we got from the host
+	// TODO: regulate http client request in a pkg, this function should only be getting the hostpool and forwarding the req, not building the resp etc
+	// forward request by hitting the IP we got from the hostpool
 
 	apiURL := host + req.Path
 
@@ -41,7 +41,7 @@ func (s Service) ForwardRequest(ctx context.Context, req forwarder.ForwardReques
 		}
 	}
 
-	// TODO: after migrating http req to a pkg, add a feature to retry to another host the request if the current request taking too long
+	// TODO: after migrating http req to a pkg, add a feature to retry to another hostpool the request if the current request taking too long
 	// Create an HTTP client and send the forward request
 	client := http.DefaultClient
 	httpResp, err := client.Do(httpReq)

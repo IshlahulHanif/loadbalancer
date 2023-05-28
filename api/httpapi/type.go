@@ -6,4 +6,5 @@ type Module struct {
 
 type service struct {
 	forwarder forwarderMethod
+	hostpool  hostpoolMethod
 }
