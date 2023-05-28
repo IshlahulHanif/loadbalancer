@@ -46,7 +46,7 @@ func (u *Usecase) RemoveHost(ctx context.Context, host string) (err error) {
 		if value == host {
 			// Remove the element from the roundRobinQueue
 			u.roundRobinQueue.queue = append(u.roundRobinQueue.queue[:i], u.roundRobinQueue.queue[i+1:]...)
-			// no need to move index
+			u.roundRobinQueue.index = u.roundRobinQueue.index % len(u.roundRobinQueue.queue)
 			break
 		}
 	}
