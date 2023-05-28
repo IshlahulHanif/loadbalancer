@@ -2,8 +2,6 @@ package poolclient
 
 import (
 	"context"
-	"fmt"
-	"github.com/IshlahulHanif/poneglyph"
 	"net"
 	"strings"
 )
@@ -22,15 +20,9 @@ func (u Usecase) PingHost(ctx context.Context, host string) (isPingSuccess bool)
 
 	_, err := net.DialTimeout("tcp", host, timeout)
 	if err != nil {
-		err = poneglyph.Trace(err)
-		fmt.Println(poneglyph.GetErrorLogMessage(err))
-
 		// try without http://
 		_, err = net.DialTimeout("tcp", hostWithoutHttp, timeout)
 		if err != nil {
-			err = poneglyph.Trace(err)
-			fmt.Println(poneglyph.GetErrorLogMessage(err))
-
 			return false
 		}
 	}
