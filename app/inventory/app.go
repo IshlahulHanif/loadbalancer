@@ -3,12 +3,37 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/IshlahulHanif/poneglyph"
+	"net"
 	"net/http"
 )
 
+var (
+	myIP string
+)
+
 func main() {
+	var err error
+
+	// init poneglyph settings
+	poneglyph.SetProjectName("loadbalancer")
+	poneglyph.SetIsPrintFromContentRoot(true)
+	poneglyph.SetIsPrintFunctionName(true)
+	poneglyph.SetIsPrintNewline(true)
+	poneglyph.SetIsUseTabSeparator(false)
+
+	myIP, err = GetLocalIP()
+	if err != nil {
+		err = poneglyph.Trace(err)
+		fmt.Println(poneglyph.GetLogErrorTrace(err))
+	}
+
 	http.HandleFunc("/", handleRequest)
-	fmt.Println(http.ListenAndServe(":8080", nil)) //TODO: change error logger
+	err = http.ListenAndServe(":8080", nil)
+	if err != nil {
+		err = poneglyph.Trace(err)
+		fmt.Println(poneglyph.GetLogErrorTrace(err))
+	}
 }
 
 func handleRequest(w http.ResponseWriter, r *http.Request) {
@@ -25,9 +50,34 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Respond with the received JSON payload
+	// TODO: use the pattern from the round robin app
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Host", myIP)
+
+	// Respond with the received JSON payload
 	responseJSON, _ := json.Marshal(payload)
-	fmt.Fprint(w, string(responseJSON))
+	_, err = fmt.Fprint(w, string(responseJSON))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func GetLocalIP() (string, error) {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return "", poneglyph.Trace(err, "Failed to get local IP")
+	}
+
+	for _, address := range addrs {
+		// check the address type and if it is not a loopback the display it
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				return ipnet.IP.String(), nil
+			}
+		}
+	}
+	return "", nil
 }
