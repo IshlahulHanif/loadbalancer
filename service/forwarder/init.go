@@ -25,6 +25,7 @@ func GetInstance(c config.Config) (Service, error) {
 		}
 
 		m = Service{
+			config: c,
 			usecase: usecase{
 				hostpool: hostpoolUsecase,
 			},

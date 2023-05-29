@@ -4,6 +4,7 @@ import "context"
 
 type (
 	UsecaseHostpool interface {
-		GetHost(ctx context.Context) (res string, err error)
+		GetHostDequeueRoundRobin(ctx context.Context) (res string, err error)
+		RemoveHost(ctx context.Context, host string) (err error)
 	}
 )

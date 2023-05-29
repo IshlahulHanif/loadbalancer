@@ -1,68 +1,60 @@
 package forwarder
 
 import (
-	"bytes"
 	"context"
+	"fmt"
 	"github.com/IshlahulHanif/poneglyph"
 	"github.com/loadbalancer/entity/forwarder"
-	"io"
+	"github.com/loadbalancer/pkg/http/httpclient"
 	"net/http"
+	"strings"
 )
 
 func (s Service) ForwardRequest(ctx context.Context, req forwarder.ForwardRequestReq) (resp forwarder.ForwardRequestResp, err error) {
 	resp.Header = map[string][]string{}
 
 	// get hostpool
-	host, err := s.usecase.hostpool.GetHost(ctx)
+	host, err := s.usecase.hostpool.GetHostDequeueRoundRobin(ctx)
 	if err != nil {
 		return resp, poneglyph.Trace(err)
 	}
 
-	// TODO: regulate http client request in a pkg, this function should only be getting the hostpool and forwarding the req, not building the resp etc
-	// forward request by hitting the IP we got from the hostpool
+	// create a request
+	agent := httpclient.NewHTTPAgent()
+	agent.Url = host
+	agent.Path = req.Path
+	agent.Param = req.QueryParams
+	agent.Body = req.Body
+	agent.Headers = req.Header
+	agent.Method = req.Method
+	agent.Timeout = s.config.RequestTimeout
 
-	apiURL := host + req.Path
-
-	// Add Query param
-	if len(req.QueryParams) > 0 {
-		apiURL += "?" + req.QueryParams.Encode()
-	}
-
-	// Create a new HTTP request to forward the request
-	httpReq, err := http.NewRequest(req.Method, host+req.Path, bytes.NewBuffer(req.Body))
+	httpResp, err := agent.DoReq()
 	if err != nil {
+		if strings.Contains(err.Error(), "context deadline exceeded") {
+			// if timeout, remove host from pool //TODO: should only remove host from pool after multiple timeout, can use circuit breaker
+			errRemoveHost := s.usecase.hostpool.RemoveHost(ctx, host)
+			if errRemoveHost != nil {
+				errRemoveHost = poneglyph.Trace(errRemoveHost)
+				fmt.Println(poneglyph.GetErrorLogMessage(errRemoveHost))
+			}
+		}
+
 		return resp, poneglyph.Trace(err)
 	}
 
-	// Copy headers from the original request to the forward request
-	for key, values := range req.Header {
-		for _, value := range values {
-			httpReq.Header.Add(key, value)
+	// if timeout, remove host from pool //TODO: should only remove host from pool after multiple timeout, can use circuit breaker
+	if httpResp.StatusCode == http.StatusRequestTimeout {
+		err = s.usecase.hostpool.RemoveHost(ctx, host)
+		if err != nil {
+			err = poneglyph.Trace(err)
+			fmt.Println(poneglyph.GetErrorLogMessage(err))
 		}
 	}
 
-	// TODO: after migrating http req to a pkg, add a feature to retry to another hostpool the request if the current request taking too long
-	// Create an HTTP client and send the forward request
-	client := http.DefaultClient
-	httpResp, err := client.Do(httpReq)
-	if err != nil {
-		return resp, poneglyph.Trace(err)
-	}
-	defer httpResp.Body.Close()
-
-	// Read the response body from the forwarded request
-	httpRespBody, err := io.ReadAll(httpResp.Body)
-	if err != nil {
-		return resp, poneglyph.Trace(err)
-	}
-
-	for key, values := range httpResp.Header {
-		for _, value := range values {
-			resp.Header[key] = append(resp.Header[key], value)
-		}
-	}
-
-	resp.Body = httpRespBody
+	resp.Body = httpResp.Body
+	resp.StatusCode = httpResp.StatusCode
+	resp.Header = httpResp.Header
 
 	return resp, nil
 }

@@ -28,7 +28,8 @@ func main() {
 			"http://127.0.0.1:8082",
 			"http://127.0.0.1:8083",
 		},
-		PingTimeout: 5 * time.Second,
+		PingTimeout:    2 * time.Second,
+		RequestTimeout: 2 * time.Second,
 		CronConfig: config.CronConfig{
 			HealthCheckAll: "@every 10s",
 		},

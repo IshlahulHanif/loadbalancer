@@ -6,7 +6,7 @@ import (
 	"github.com/IshlahulHanif/poneglyph"
 )
 
-func (u Usecase) GetHost(ctx context.Context) (res string, err error) {
+func (u Usecase) GetHostDequeueRoundRobin(ctx context.Context) (res string, err error) {
 	pool, err := u.repo.hostpool.GetHostListFromPool(ctx)
 	if err != nil {
 		return "", poneglyph.Trace(err)

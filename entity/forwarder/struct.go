@@ -12,7 +12,8 @@ type (
 	}
 
 	ForwardRequestResp struct {
-		Body   []byte
-		Header map[string][]string
+		Body       []byte
+		Header     map[string][]string
+		StatusCode int
 	}
 )

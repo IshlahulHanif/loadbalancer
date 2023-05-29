@@ -62,9 +62,12 @@ func (m Module) HandlerForwardRequest(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	statusCode = resp.StatusCode
+	w.WriteHeader(statusCode)
+
 	// We use raw encoder because this api purpose is to forward anything
 	_, err = fmt.Fprint(w, string(resp.Body))
-	if err != nil {
+	if err != nil { // TODO: this internal server error cannot overwrite the status if the status has already been written
 		err = poneglyph.Trace(err)
 		statusCode = http.StatusInternalServerError
 		return
