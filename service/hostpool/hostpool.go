@@ -25,7 +25,25 @@ func (s Service) ManageHost(ctx context.Context, req hostEntity.ManageHostReq) (
 			}
 		}
 	case hostEntity.HealthCheck:
-		//TODO: implement
+		// execute health check
+		var res hostEntity.HealthCheckAllHostResp
+		res, err = m.HealthCheckAllHost(ctx)
+		if err != nil {
+			err = poneglyph.Trace(err)
+		}
+
+		// print health check result
+		// Print the health check result
+		fmt.Println("Forced Health Check Result:")
+		fmt.Println("Healthy Hosts:")
+		for _, host := range res.HealthyHosts {
+			fmt.Printf("\t- %s\n", host)
+		}
+
+		fmt.Println("Down Hosts:")
+		for _, host := range res.DownHosts {
+			fmt.Printf("\t- %s\n", host)
+		}
 	default:
 		return poneglyph.Trace(errors.New("unknown host operation"))
 	}
