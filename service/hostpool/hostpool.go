@@ -85,7 +85,7 @@ func (s Service) HealthCheckAllHost(ctx context.Context) (resp hostEntity.Health
 				errAddHost := s.usecase.hostpool.AddHost(ctx, host)
 				if errAddHost != nil {
 					// if fail, continue with other host but note the error
-					errAddHost = poneglyph.Trace(err, fmt.Sprintf("add host fail for host: %s", host))
+					errAddHost = poneglyph.Trace(errAddHost, fmt.Sprintf("add host fail for host: %s", host))
 					fmt.Println(poneglyph.GetErrorLogMessage(errAddHost))
 					continue
 				}
@@ -95,11 +95,11 @@ func (s Service) HealthCheckAllHost(ctx context.Context) (resp hostEntity.Health
 
 			// if down/timeout, remove from host pool
 			isHostAlreadyInPool := hostPoolMap[host]
-			if !isHostAlreadyInPool {
+			if isHostAlreadyInPool {
 				errRemoveHost := s.usecase.hostpool.RemoveHost(ctx, host)
 				if errRemoveHost != nil {
 					// if fail, continue with other host but note the error
-					errRemoveHost = poneglyph.Trace(err, fmt.Sprintf("remove host fail for host: %s", host))
+					errRemoveHost = poneglyph.Trace(errRemoveHost, fmt.Sprintf("remove host fail for host: %s", host))
 					fmt.Println(poneglyph.GetErrorLogMessage(errRemoveHost))
 					continue
 				}
