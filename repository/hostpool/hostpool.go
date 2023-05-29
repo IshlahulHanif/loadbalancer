@@ -29,8 +29,13 @@ func (r Repository) AppendHost(ctx context.Context, host string) (err error) {
 	lock.Lock()
 	defer lock.Unlock()
 
-	// TODO: make sure hosts are unique before append
+	// ensure no duplicate host, still need to deal with http:// or https:// considered different tho...
+	if poolMap[host] {
+		return nil
+	}
+
 	pool = append(pool, host)
+	poolMap[host] = true
 
 	return nil
 }
@@ -55,6 +60,7 @@ func (r Repository) RemoveHostByHostAddress(ctx context.Context, host string) (e
 			// Remove the element from the roundRobinQueue
 			pool = append(pool[:i], pool[i+1:]...)
 			index = index % len(pool)
+			poolMap[host] = false
 			break
 		}
 	}
