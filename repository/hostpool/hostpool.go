@@ -44,8 +44,8 @@ func (r Repository) RequeueFirstHostToLast(ctx context.Context) (err error) {
 	lock.Lock()
 	defer lock.Unlock()
 
-	if len(pool) > 0 {
-		pool = append(pool[0:], pool[0])
+	if len(pool) > 1 {
+		pool = append(pool[1:], pool[0])
 	}
 
 	return nil
