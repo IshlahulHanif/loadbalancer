@@ -3,6 +3,7 @@ package hostpool
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/IshlahulHanif/poneglyph"
 )
 
@@ -24,6 +25,7 @@ func (u Usecase) GetHostDequeueRoundRobin(ctx context.Context) (res string, err 
 	}
 
 	if length-1 < currentIdx {
+		fmt.Println(poneglyph.Trace(errors.New("host index is bigger than host pool, attempting to fix")))
 		// index overload, restart to 0
 		currentIdx, err = u.repo.hostpool.SetIndex(ctx, 0)
 		if err != nil {
@@ -36,7 +38,10 @@ func (u Usecase) GetHostDequeueRoundRobin(ctx context.Context) (res string, err 
 			return "", poneglyph.Trace(err)
 		}
 
-		return "", poneglyph.Trace(err)
+		// final check to ensure index can be used
+		if length-1 < currentIdx {
+			return "", poneglyph.Trace(err)
+		}
 	}
 
 	res = pool[currentIdx]
