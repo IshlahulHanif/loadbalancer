@@ -59,8 +59,12 @@ func (r Repository) RemoveHostByHostAddress(ctx context.Context, host string) (e
 		if value == host {
 			// Remove the element from the roundRobinQueue
 			pool = append(pool[:i], pool[i+1:]...)
-			index = index % len(pool)
 			poolMap[host] = false
+			if len(pool) > 0 {
+				index = index % len(pool)
+			} else {
+				index = 0
+			}
 			break
 		}
 	}
@@ -73,7 +77,11 @@ func (r Repository) IncrementIndex(ctx context.Context, increment int) (res int,
 	lock.Lock()
 	defer lock.Unlock()
 
-	index = (index + increment) % len(pool)
+	if len(pool) > 0 {
+		index = (index + increment) % len(pool)
+	} else {
+		index = 0
+	}
 
 	return index, nil
 }
@@ -82,7 +90,11 @@ func (r Repository) SetIndex(ctx context.Context, newIndex int) (res int, err er
 	lock.Lock()
 	defer lock.Unlock()
 
-	index = newIndex % len(pool)
+	if len(pool) > 0 {
+		index = newIndex % len(pool)
+	} else {
+		index = 0
+	}
 
 	return index, nil
 }
