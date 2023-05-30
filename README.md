@@ -25,6 +25,18 @@ You can send HTTP requests to `localhost:8080` using any tool capable of making 
 
 The load balancer app performs regular health checks on the backend app servers. If a server becomes unavailable (e.g., stopped), the load balancer will detect it and exclude it from the pool of available servers. You can simulate this by stopping one of the backend app servers and observing the load balancer logs. Requests will not be forwarded to the stopped server.
 
+You can also force a backend server to respond slowly by sending: (change X with the appropriate port you want to slow down)
+
+```
+curl --location 'http://127.0.0.1:909X/bounce/delay/add' \
+--header 'Content-Type: application/json' \
+--data '{
+    "delay_second": 10
+}'
+```
+
+when the app detects that the particular server is responding slowly, it will temporarily remove the server from pool.
+
 Feel free to explore the load balancer app and test its functionality.
 
 ## Flow
