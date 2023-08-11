@@ -33,6 +33,17 @@ services:
       mynetwork:
         ipv4_address: 192.168.0.13
 
+  backendapp4:
+    build:
+      context: ./app/inventory
+      dockerfile: Dockerfile
+    ports:
+      - 8084:8080
+      - 9094:9090
+    networks:
+      mynetwork:
+        ipv4_address: 192.168.0.14
+
 networks:
   mynetwork:
     driver: bridge

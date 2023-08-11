@@ -31,7 +31,7 @@ func main() {
 		PingTimeout:    2 * time.Second,
 		RequestTimeout: 2 * time.Second,
 		CronConfig: config.CronConfig{
-			HealthCheckAll: "@every 10s",
+			HealthCheckAll: "@every 10m",
 		},
 	}
 

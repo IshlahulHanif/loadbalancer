@@ -6,7 +6,6 @@ import (
 	"github.com/IshlahulHanif/poneglyph"
 	"github.com/loadbalancer/entity/forwarder"
 	"github.com/loadbalancer/pkg/http/httpclient"
-	"net/http"
 	"strings"
 )
 
@@ -43,14 +42,7 @@ func (s Service) ForwardRequest(ctx context.Context, req forwarder.ForwardReques
 		return resp, poneglyph.Trace(err)
 	}
 
-	// if timeout, remove host from pool //TODO: should only remove host from pool after multiple timeout, can use circuit breaker
-	if httpResp.StatusCode == http.StatusRequestTimeout {
-		err = s.usecase.hostpool.RemoveHost(ctx, host)
-		if err != nil {
-			err = poneglyph.Trace(err)
-			fmt.Println(poneglyph.GetErrorLogMessage(err))
-		}
-	}
+	// loop try if its time out and try the next host
 
 	resp.Body = httpResp.Body
 	resp.StatusCode = httpResp.StatusCode
